@@ -1,0 +1,424 @@
+{% load static %}
+
+
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+
+</head>
+
+
+
+{% if request.session.username %}
+
+    <link rel="stylesheet" href="{% static 'index/index.css' %}">
+    <body>
+    <div class="welcome">
+        <div>欢迎{{ request.session.username }}</div>
+        <a href="/user/logout">退出登录</a>
+    </div>
+    <div class="switch">
+        <input type="button" name="tab" value="留言板" class="past">
+
+
+        <input type="button" name="tab" value="未来计划" class="future">
+
+
+    </div>
+    <div class="thingBox">
+        <div id="pastBox" class="pastBox">
+            <div id="addBox" class="addBox">
+
+                <input id="t" class="dataIn" type="datetime-local">
+                <textarea id="d" class="detailIn"></textarea>
+                <input class="submit" type="button" value="添加留言" onclick="addline()">
+
+            </div>
+
+        </div>
+
+        <div id="futureBox" class="futureBox">
+            <div id="addfBox" class="addfBox">
+                <input id="ft" class="dataIn" type="datetime-local">
+                <textarea id="fd" class="detailIn"></textarea>
+                <input id="ck" type="checkbox" name="showBefore" value="">显示今天之前的计划
+                <input class="submit0" type="button" value="添加计划" onclick="addfline()">
+            </div>
+        </div>
+    </div>
+
+
+    </body>
+    <script src="/static/jquery-3.6.0.min.js"></script>
+    <script>
+    date = new Date();
+        {#var yyy= "{{detail}}"#}
+        {#console.log(yyy)#}
+        var total ={{ total1 }};
+        var total2 ={{ total2 }};
+        var flag = 1;
+        $('#ck').change(function (){
+            if($('#ck').prop("checked")){
+                console.log('checked');
+                 var dxs0 =document.getElementsByClassName('futuredetail');
+                 for(var dxsnum0=0;dxsnum0<dxs0.length;dxsnum0++){
+                     dxs0[dxsnum0].style.display='flex';
+                 }
+            }
+            else {
+                console.log('unchecked');
+                var dxs =document.getElementsByClassName('futuredetail');
+                for(var dxsnum=0;dxsnum<dxs.length;dxsnum++){
+                    console.log(dxs[dxsnum].firstElementChild.innerHTML.replaceAll('.',''));
+                    var bianliang=Number(dxs[dxsnum].firstElementChild.innerHTML.replaceAll('.',''));
+                    var tm=date.toLocaleDateString().replaceAll('/','');
+                    var zzjg;
+                    if(tm.length<8){
+                       zzjg= Number(tm.slice(0,4)+"0"+tm.slice(4,8));
+                    }else {
+                        zzjg=Number(tm);
+                    }
+                    if(bianliang<zzjg){
+                        dxs[dxsnum].style.display='none';
+                    }
+
+                }
+            }
+        })
+
+        $(window).scroll(function () {
+            var scrollTop = $(this).scrollTop();
+            var scrollHeight = $(document).height();
+            var windowHeight = $(this).height();
+            if (scrollTop + windowHeight == scrollHeight) {
+                if (flag == 1) {
+                    console.log('1  ok');
+                    var divnum = document.getElementsByClassName('pastdetail').length
+                    if (total - divnum > 7) {
+                        times = 7;
+                    } else {
+                        times = total - divnum;
+                    }
+                    for (var cishu = 0; cishu < times; cishu++) {
+                        $.ajax({
+                            url: "/index/reflash",
+                            type: "get",
+                            data: {
+                                divnum: divnum,
+                                ci: cishu
+                            },
+                            success: function (res) {
+                                var childdiv = $('<div></div>');
+                                var childdiv1 = $('<div></div>');
+                                var childdiv2 = $('<div></div>');
+                                childdiv.addClass('pastdetail');
+                                childdiv1.addClass('pastdate');
+                                childdiv2.addClass('pastthing');
+                                var tmpdate = res['datetime'];
+                                var date = tmpdate.slice(0, 10);
+                                var tdate = date.replaceAll('-', '.');
+                                {#console.log(tdate);#}
+                                childdiv1.append(tdate);
+                                childdiv2.append(res['detail'])
+                                childdiv.append(childdiv1);
+                                childdiv.append(childdiv2);
+                                $("#pastBox").append(childdiv);
+                                {#console.log($("#pastBox"))#}
+
+                            }
+
+                        })
+                    }
+                    return;
+                }
+                if (flag == 0) {
+                    console.log('0    ok');
+
+                    var divnum1 = document.getElementsByClassName('futuredetail').length
+                    if (total2 - divnum1 > 7) {
+                        times = 7;
+                    } else {
+                        times = total2 - divnum1;
+                    }
+                    for (var cishu = 0; cishu < times; cishu++) {
+                        $.ajax({
+                            url: "/index/reflashf",
+                            type: "get",
+                            data: {
+                                divnum: divnum1,
+                                ci: cishu
+                            },
+                            success: function (res) {
+                                var childdiv = $('<div></div>');
+                                var childdiv1 = $('<div></div>');
+                                var childdiv2 = $('<div></div>');
+                                childdiv.addClass('futuredetail');
+                                childdiv1.addClass('futuredate');
+                                childdiv2.addClass('futurething');
+                                var tmpdate = res['futuredatetime'];
+                                var date = tmpdate.slice(0, 10);
+                                var tdate = date.replaceAll('-', '.');
+                                {#console.log(tdate);#}
+                                childdiv1.append(tdate);
+                                {#console.log(res);#}
+                                childdiv2.append(res['detail'])
+                                childdiv.append(childdiv1);
+                                childdiv.append(childdiv2);
+                                $("#futureBox").append(childdiv);
+                                {#console.log($("#futureBox"))#}
+
+                            }
+
+                        })
+                    }
+
+                    return;
+                }
+            }
+        });
+
+
+        if (flag == 1) {
+            for (var num = 0; num < 7; num++) {
+                $.ajax({
+
+                    url: "/index/addpast",
+                    type: "get",
+                    data: {
+                        num: num
+                    },
+
+                    success: function (res) {
+                        {#console.log(res)#}
+                        var childdiv = $('<div></div>');
+                        var childdiv1 = $('<div></div>');
+                        var childdiv2 = $('<div></div>');
+                        childdiv.addClass('pastdetail');
+                        childdiv1.addClass('pastdate');
+                        childdiv2.addClass('pastthing');
+                        var tmpdate = res['datetime'];
+                        var date = tmpdate.slice(0, 10);
+                        var tdate = date.replaceAll('-', '.');
+                        {#console.log(tdate);#}
+                        childdiv1.append(tdate);
+                        childdiv2.append(res['detail'])
+                        childdiv.append(childdiv1);
+                        childdiv.append(childdiv2);
+                        $("#pastBox").append(childdiv);
+                        {#console.log($("#pastBox"))#}
+
+                    }
+
+
+                })
+            }
+        }
+
+        var username = {{request.session.username }};
+
+
+        function addfline() {
+
+            if (fd.value == '') {
+                alert('未来计划为空');
+                return;
+            }
+            var childdiv = $('<div></div>');
+            var childdiv1 = $('<div></div>');
+            var childdiv2 = $('<div></div>');
+            childdiv.addClass('futuredetail');
+            childdiv1.addClass('futuredate');
+            childdiv2.addClass('futurething');
+            childdiv1.append(ft.value.slice(0,10).replaceAll('-','.'));
+            childdiv2.append(fd.value);
+            childdiv.append(childdiv1);
+            childdiv.append(childdiv2);
+            $("#addfBox").after(childdiv);
+            console.log($("#addfBox"))
+
+            var detail = fd.value;
+            var futuredatetime = ft.value;
+            $("#fd").val('');
+            $("#ft").val('');
+
+            console.log()
+            $.ajax({
+
+                url: "/index/addfuture",
+                type: "post",
+                data: {
+                    detail: detail,
+                    username: username,
+                    futuredatetime: futuredatetime
+
+                },
+                success: function (res) {
+                    console.log(res)
+                }
+
+
+            })
+        }
+
+        function addline() {
+
+            if (d.value == '') {
+                alert('留言为空');
+                return;
+            }
+            var childdiv = $('<div></div>');
+            var childdiv1 = $('<div></div>');
+            var childdiv2 = $('<div></div>');
+            childdiv.addClass('pastdetail');
+            childdiv1.addClass('pastdate');
+            childdiv2.addClass('pastthing');
+            childdiv1.append(t.value.slice(0,10).replaceAll('-','.'));
+            childdiv2.append(d.value);
+            childdiv.append(childdiv1);
+            childdiv.append(childdiv2);
+            $("#addBox").after(childdiv);
+            console.log($("#addBox"))
+
+            var detail = d.value;
+            $("#d").val('');
+            $("#t").val('');
+
+            console.log()
+            $.ajax({
+
+                url: "/index/addpast",
+                type: "post",
+                data: {
+                    detail: detail,
+                    username: username
+
+                },
+                success: function (res) {
+                    console.log(res)
+                }
+
+
+            })
+        }
+
+
+        var obj = document.getElementsByName('tab')
+        for (var i = 0; i < obj.length; i++) {
+            obj[i].onclick = function () {
+                for (var j = 0; j < obj.length; j++) {
+                    obj[j].style.backgroundColor = 'white';
+                }
+                this.style.backgroundColor = '#c1cbd7';
+                if (this.value == '留言板') {
+                    document.getElementsByClassName('pastBox')[0].style.display = 'flex';
+                    document.getElementsByClassName('futureBox')[0].style.display = 'none';
+                    flag = 1;
+                    if (document.getElementsByClassName('pastdetail').length < 7) {
+                        for (var num = 0; num < 7; num++) {
+                            $.ajax({
+
+                                url: "/index/addpast",
+                                type: "get",
+                                data: {
+                                    num: num
+                                },
+
+                                success: function (res) {
+                                    {#console.log(res)#}
+                                    var childdiv = $('<div></div>');
+                                    var childdiv1 = $('<div></div>');
+                                    var childdiv2 = $('<div></div>');
+                                    childdiv.addClass('pastdetail');
+                                    childdiv1.addClass('pastdate');
+                                    childdiv2.addClass('pastthing');
+                                    var tmpdate = res['datetime'];
+                                    var date = tmpdate.slice(0, 10);
+                                    var tdate = date.replaceAll('-', '.');
+                                    {#console.log(tdate);#}
+                                    childdiv1.append(tdate);
+                                    childdiv2.append(res['detail'])
+                                    childdiv.append(childdiv1);
+                                    childdiv.append(childdiv2);
+                                    $("#pastBox").append(childdiv);
+                                    {#console.log($("#pastBox"))#}
+
+                                }
+
+
+                            })
+                        }
+                    }
+
+                } else {
+                    document.getElementsByClassName('pastBox')[0].style.display = 'none';
+                    document.getElementsByClassName('futureBox')[0].style.display = 'flex';
+                    flag = 0;
+                    if (document.getElementsByClassName('futuredetail').length < 7) {
+                        for (var num = 0; num < 7; num++) {
+                            $.ajax({
+
+                                url: "/index/addfuture",
+                                type: "get",
+                                data: {
+                                    num: num
+                                },
+
+                                success: function (res) {
+                                    {#console.log(res)#}
+                                    var childdiv = $('<div></div>');
+                                    var childdiv1 = $('<div></div>');
+                                    var childdiv2 = $('<div></div>');
+                                    childdiv.addClass('futuredetail');
+                                    childdiv1.addClass('futuredate');
+                                    childdiv2.addClass('futurething');
+                                    var tmpdate = res['datetime'];
+                                    var date = tmpdate.slice(0, 10);
+                                    var tdate = date.replaceAll('-', '.');
+                                    {#console.log(tdate);#}
+                                    childdiv1.append(tdate);
+                                    childdiv2.append(res['detail'])
+                                    childdiv.append(childdiv1);
+                                    childdiv.append(childdiv2);
+                                    $("#futureBox").append(childdiv);
+                                    {#console.log($("#futureBox"))#}
+
+                                }
+
+
+                            })
+                        }
+                    }
+
+                }
+
+
+            }
+        }
+    </script>
+
+{% else %}
+    {% if request.COOKIES.username %}
+        <p>
+            欢迎 {{ request.COOKIES.username }}
+        </p>
+        <p>
+            <a href="/user/logout">退出登录</a>
+        </p>
+        <p>
+            <a href="">进入我的笔记</a>
+        </p>
+    {% else %}
+
+        <div>
+            <script>
+                window.location.href = "/user/login"
+            </script>
+
+        </div>
+    {% endif %}
+
+{% endif %}
+
+
+</html>
